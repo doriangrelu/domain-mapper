@@ -54,3 +54,59 @@ La demande de Map dépilera les Mappers dans l'ordre d'ajout.
 L'implémentation est **ThreadSafe** et donc plusieurs application peuvent être faites en parallèle.
 
 Pour Map un domaine la procédure est similaire, seulement la fonction est nommée **mapDomain**.
+
+## Convertir les objets
+
+Pour convertir les objets c'est très simple, il vous suffit de construire un Wrapper, pour ensuite ajouter des
+convertisseurs à la demande. Si vous souhaiter convertir les objets d'entité à domaine et vis et vers ça, il faudra
+définir deux convertisseurs.
+
+    // Définition du type au getInstance, mais il est possible d'utiliser deux setter (setDomainClazz, setEntityClazz)
+    WrapperBuilder<EntityType, DomainType> wrapperBuilder = WrapperBuilder.getInstance(EntityType.class, DomainType.class);
+
+    // Ajout des Mappers en mode Fluent    
+    wrapperBuilder
+        .addEntityMapper(o -> {
+			o.lastname = "éric";
+			return o;
+		})
+        .addEntityMapper(o -> {
+			o.lastname = "jean-michel";
+			return o;
+		})
+        .setToDomainConverter(context -> { // Pour convertir vers un domaine
+			DomainMock domain = new DomainMock();
+			domain.firstname = context.getValue().firstname + "_";
+			domain.lastname = context.getValue().lastname + "_";
+			domain.age = 30;
+
+			return domain;
+		})
+        .setToEntityConverter(context -> {
+			EntityMock entity = new EntityMock();
+			entity.firstname = "eric";
+			entity.lastname = "eric";
+			entity.birthday = new Date();
+			return entity;
+		});
+
+    // Construction du Wrapper
+    EntityDomainWrapper<EntityType, DomainType> wrapper = wrapperBuilder.build(); 
+
+    EntityType entity = new EntityType();
+    entity1.firstname = "eric";
+    entity1.lastname = "pierre";
+    
+    // Transformation en domaine
+    DomainType targetDomain = wrapper.toDomain(entity); 
+
+    // Transformation en entité
+    DomainType targetEntity = wrapper.toEntity(targetDomain);
+
+Plusieurs choses sont à savoir:
+
+- Si vous n'ajoutez aucun convertisseur, alors un par défaut sera utilisé
+- Les fonctions exposées peuvent s'appliquer à des listes
+- La variable context injectée au convertisseur contient l'objet à convertir, mais aussi une instance du convertisseur
+  de base, avec les options passées. 
+
