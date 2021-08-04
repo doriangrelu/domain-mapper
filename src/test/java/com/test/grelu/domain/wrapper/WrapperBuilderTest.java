@@ -131,7 +131,7 @@ public class WrapperBuilderTest {
 	@Test
 	public void testConverterSingleEntityInheritedDomain() {
 		WrapperBuilder<EntityMock, DomainMock> wrapperBuilder = WrapperBuilder.getInstance(EntityMock.class, DomainMock.class);
-
+		
 		wrapperBuilder.setToDomainConverter(context -> {
 			DomainMock domain = new InheritedDomainMock();
 			domain.firstname = context.getValue().firstname + "_";
