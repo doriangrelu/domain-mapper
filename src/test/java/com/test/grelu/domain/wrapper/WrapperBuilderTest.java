@@ -1,11 +1,11 @@
 package com.test.grelu.domain.wrapper;
 
 
-
 import com.grelu.domain.wrapper.EntityDomainWrapper;
 import com.grelu.domain.wrapper.builder.WrapperBuilder;
 import com.test.grelu.domain.wrapper.mock.DomainMock;
 import com.test.grelu.domain.wrapper.mock.EntityMock;
+import com.test.grelu.domain.wrapper.mock.InheritedDomainMock;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -127,6 +127,33 @@ public class WrapperBuilderTest {
 		assertThat(domain.lastname).isEqualTo("pierre_");
 		assertThat(domain.age).isEqualTo(30);
 	}
+
+	@Test
+	public void testConverterSingleEntityInheritedDomain() {
+		WrapperBuilder<EntityMock, DomainMock> wrapperBuilder = WrapperBuilder.getInstance(EntityMock.class, DomainMock.class);
+
+		wrapperBuilder.setToDomainConverter(context -> {
+			DomainMock domain = new InheritedDomainMock();
+			domain.firstname = context.getValue().firstname + "_";
+			domain.lastname = context.getValue().lastname + "_";
+			domain.age = 30;
+
+			return domain;
+		});
+
+		EntityMock entity = new EntityMock();
+		entity.firstname = "eric";
+		entity.lastname = "pierre";
+
+		DomainMock domain = wrapperBuilder
+				.build()
+				.toDomain(entity);
+
+		assertThat(domain.firstname).isEqualTo("eric_");
+		assertThat(domain.lastname).isEqualTo("pierre_");
+		assertThat(domain.age).isEqualTo(30);
+	}
+
 
 	@Test
 	public void testConverterMultipleEntityDomain() {
