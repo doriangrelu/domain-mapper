@@ -6,7 +6,6 @@ import com.grelu.domain.wrapper.builder.WrapperBuilder;
 import com.test.grelu.domain.wrapper.mock.DomainMock;
 import com.test.grelu.domain.wrapper.mock.EntityMock;
 import com.test.grelu.domain.wrapper.mock.InheritedDomainMock;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;

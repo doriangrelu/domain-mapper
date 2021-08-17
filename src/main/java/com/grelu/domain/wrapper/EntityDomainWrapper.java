@@ -27,6 +27,27 @@ public interface EntityDomainWrapper<E, D> {
 	}
 
 	/**
+	 * Convertis un objet métier en entité, en forçant le type de retours, sans utiliser celui configuré dans le bean
+	 *
+	 * @param domain domaine métier
+	 * @param clazz  type d'entité
+	 * @return entité
+	 */
+	default E toEntity(D domain, Class<E> clazz) {
+		return this.toEntity(domain, clazz, true);
+	}
+
+	/**
+	 * Convertis un objet métier en entité, en forçant le type de retours, sans utiliser celui configuré dans le bean
+	 *
+	 * @param domain     domaine métier
+	 * @param clazz      type d'entité
+	 * @param triggerMap déclencher un map ?
+	 * @return entité
+	 */
+	E toEntity(D domain, Class<E> clazz, boolean triggerMap);
+
+	/**
 	 * Convertis un objet métier en entité
 	 *
 	 * @param domain     domaine métier
@@ -34,6 +55,12 @@ public interface EntityDomainWrapper<E, D> {
 	 * @return entité
 	 */
 	E toEntity(D domain, boolean triggerMap);
+
+	default List<E> toEntities(List<D> domains, Class<E> clazz) {
+		return this.toEntities(domains, clazz, true);
+	}
+
+	List<E> toEntities(List<D> domains, Class<E> clazz, boolean triggerMap);
 
 	/**
 	 * Convertis une liste d'objets métier en entité
@@ -75,6 +102,12 @@ public interface EntityDomainWrapper<E, D> {
 	 */
 	D toDomain(E entity, boolean triggerMap);
 
+	default D toDomain(E entity, Class<D> clazz) {
+		return this.toDomain(entity, clazz, true);
+	}
+
+	D toDomain(E entity, Class<D> clazz, boolean triggerMap);
+
 	/**
 	 * Convertis une liste d'entité en domaine métier
 	 * Déclenche un Map automatiquement
@@ -94,6 +127,12 @@ public interface EntityDomainWrapper<E, D> {
 	 * @return liste des domaines
 	 */
 	List<D> toDomains(List<E> entities, boolean triggerMap);
+
+	default List<D> toDomains(List<E> entities, Class<D> clazz) {
+		return this.toDomains(entities, clazz, true);
+	}
+
+	List<D> toDomains(List<E> entities, Class<D> clazz, boolean triggerMap);
 
 	/**
 	 * Map une entité

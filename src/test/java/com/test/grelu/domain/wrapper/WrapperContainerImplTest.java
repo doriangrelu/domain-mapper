@@ -1,6 +1,5 @@
 package com.test.grelu.domain.wrapper;
 
-
 import com.grelu.domain.wrapper.EntityDomainWrapper;
 import com.grelu.domain.wrapper.WrapperContainer;
 import com.grelu.domain.wrapper.builder.WrapperBuilder;
@@ -10,6 +9,7 @@ import com.test.grelu.domain.wrapper.mock.DomainMock;
 import com.test.grelu.domain.wrapper.mock.EntityMock;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -22,7 +22,7 @@ public class WrapperContainerImplTest {
 		EntityDomainWrapper<EntityMock, DomainMock> firstWrapper = WrapperBuilder.getInstance(EntityMock.class, DomainMock.class).build();
 		EntityDomainWrapper<EntityMock, DomainMock> secondWrapper = WrapperBuilder.getInstance(EntityMock.class, DomainMock.class).build();
 
-		WrapperContainer container = new WrapperContainerImpl();
+		WrapperContainer container = new WrapperContainerImpl(new ArrayList<>());
 
 		container.registerWrapper(firstWrapper)
 				.registerWrapper(secondWrapper);
@@ -31,7 +31,6 @@ public class WrapperContainerImplTest {
 
 		assertThat(wrappers).hasSize(2).contains(firstWrapper, secondWrapper);
 	}
-
 
 	@Test
 	public void testWrapperEntityWithOptions() throws NoSuchFieldException, IllegalAccessException {
@@ -46,8 +45,7 @@ public class WrapperContainerImplTest {
 
 		EntityDomainWrapper<EntityMock, DomainMock> secondWrapper = WrapperBuilder.getInstance(EntityMock.class, DomainMock.class).build();
 
-
-		WrapperContainer container = new WrapperContainerImpl();
+		WrapperContainer container = new WrapperContainerImpl(new ArrayList<>());
 		container.registerWrapper(secondWrapper, firstWrapper);
 
 		EntityMock en = new EntityMock();
@@ -56,6 +54,18 @@ public class WrapperContainerImplTest {
 		EntityMock mapped = container.mapEntity(EntityMock.class, en, "light");
 
 		assertThat(mapped.lastname).isEqualTo("JACQUES");
+	}
+
+	@Test
+	public void testWrapperEntityWithDefaultWrapper() throws NoSuchFieldException, IllegalAccessException {
+		WrapperContainer container = new WrapperContainerImpl(new ArrayList<>());
+
+		EntityMock en = new EntityMock();
+		en.lastname = "jacques";
+
+		EntityMock mapped = container.mapEntity(EntityMock.class, en);
+
+		assertThat(mapped.lastname).isEqualTo("jacques");
 	}
 
 }

@@ -1,6 +1,5 @@
 package com.grelu.domain.wrapper.builder;
 
-
 import com.grelu.domain.wrapper.EntityDomainWrapper;
 import com.grelu.domain.wrapper.PureObject;
 import com.grelu.domain.wrapper.helper.Converter;
@@ -14,7 +13,6 @@ import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 
 class EntityDomainWrapperImpl<E, D> implements EntityDomainWrapper<E, D> {
 
@@ -32,14 +30,12 @@ class EntityDomainWrapperImpl<E, D> implements EntityDomainWrapper<E, D> {
 	private final Class<D> domainClazz;
 	private final int priority;
 
-
 	/**
 	 * Concurrent management
 	 */
 	private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
-
-	public EntityDomainWrapperImpl(ModelMapper modelMapper,
+	public EntityDomainWrapperImpl(ModelMapper modelMapper, //NOSONAR
 								   Converter<D, E> toEntityConverter,
 								   Converter<E, D> toDomainConverter,
 								   Deque<Mapper<E>> entityMapper,
@@ -61,22 +57,46 @@ class EntityDomainWrapperImpl<E, D> implements EntityDomainWrapper<E, D> {
 	}
 
 	@Override
+	public E toEntity(D domain, Class<E> clazz, boolean triggerMap) {
+		return this.to(domain, this.toEntityConverter, clazz, this.buildMapperDelegate(triggerMap, this.entityMapper));
+	}
+
+	@Override
 	public E toEntity(D domain, boolean triggerMap) {
-		return this.to(domain, this.toEntityConverter, this.entityClazz, triggerMap ? this.entityMapper : defaultDeque());
+		return this.toEntity(domain, this.entityClazz, triggerMap);
+	}
+
+	@Override
+	public List<E> toEntities(List<D> domains, Class<E> clazz, boolean triggerMap) {
+		return this.tos(domains, this.toEntityConverter, clazz, this.buildMapperDelegate(triggerMap, this.entityMapper));
 	}
 
 	@Override
 	public List<E> toEntities(List<D> domains, boolean triggerMap) {
-		return this.tos(domains, this.toEntityConverter, this.entityClazz, triggerMap ? this.entityMapper : defaultDeque());
+		return this.toEntities(domains, this.entityClazz, triggerMap);
 	}
 
 	public D toDomain(E entity, boolean triggerMap) {
-		return this.to(entity, this.toDomainConverter, this.domainClazz, triggerMap ? this.domainMapper : defaultDeque());
+		return this.toDomain(entity, this.domainClazz, triggerMap);
+	}
+
+	@Override
+	public D toDomain(E entity, Class<D> clazz, boolean triggerMap) {
+		return this.to(entity, this.toDomainConverter, clazz, buildMapperDelegate(triggerMap, this.domainMapper));
 	}
 
 	@Override
 	public List<D> toDomains(List<E> entities, boolean triggerMap) {
-		return this.tos(entities, this.toDomainConverter, this.domainClazz, triggerMap ? this.domainMapper : defaultDeque());
+		return this.toDomains(entities, this.domainClazz, triggerMap);
+	}
+
+	@Override
+	public List<D> toDomains(List<E> entities, Class<D> clazz, boolean triggerMap) {
+		return this.tos(entities, this.toDomainConverter, clazz, buildMapperDelegate(triggerMap, this.domainMapper));
+	}
+
+	private <E> Deque<Mapper<E>> buildMapperDelegate(boolean triggerMap, Deque<Mapper<E>> mappers) {
+		return triggerMap ? mappers : defaultDeque();
 	}
 
 	public E mapEntity(E entity) {
@@ -108,31 +128,32 @@ class EntityDomainWrapperImpl<E, D> implements EntityDomainWrapper<E, D> {
 		return this.support(clazz, this.entityClazz, option, this.supportEntity);
 	}
 
-	@SuppressWarnings("unchecked")
-	public <F, T> List<T> tos(List<F> o, Converter<F, T> converterDelegate, Class<T> clazz, Deque<Mapper<T>> mapperDelegate) {
+	@Override
+	public int getPriority() {
+		return this.priority;
+	}
+
+	private <F, T> List<T> tos(List<F> o, Converter<F, T> converterDelegate, Class<T> clazz, Deque<Mapper<T>> mapperDelegate) {
 		return o.parallelStream().map(f -> this.to(f, converterDelegate, clazz, mapperDelegate)).toList();
 	}
 
-
-	public <F, T> T to(F o, Converter<F, T> converterDelegate, Class<T> clazz, Deque<Mapper<T>> mapperDelegate) {
+	private <F, T> T to(F o, Converter<F, T> converterDelegate, Class<T> clazz, Deque<Mapper<T>> mapperDelegate) {
 		try {
 			this.readWriteLock.readLock().lock();
+			final WrapperContext<F, T> context = this.createContext(o, clazz);
 			if (converterDelegate == null) {
-				return this.createContext(o, clazz).useDefaultModelMapper();
+				return context.useDefaultModelMapper(clazz);
 			}
-			return this.map(converterDelegate.convert(this.createContext(o, clazz)), mapperDelegate);
+			return this.map(converterDelegate.convert(context), new ArrayDeque<>(mapperDelegate));
 		} finally {
 			this.readWriteLock.readLock().lock();
 		}
 	}
 
-	public <T> List<T> maps(List<T> os, Deque<Mapper<T>> mapperDelegates) {
-		return os.parallelStream().map(t -> this.map(t, mapperDelegates)).toList();
+	private <T> List<T> maps(List<T> os, Deque<Mapper<T>> mapperDelegates) {
+		return os.parallelStream().map(t -> this.map(t, new ArrayDeque<>(mapperDelegates))).toList();
 	}
 
-	private static <T> Deque<Mapper<T>> defaultDeque() {
-		return new ArrayDeque<>();
-	}
 
 	private <T, P> boolean support(Class<T> targetClazz, Class<P> compareClazz, String option, Resolvable delegate) {
 		Assert.notNull(option, "Required option is missing");
@@ -149,19 +170,16 @@ class EntityDomainWrapperImpl<E, D> implements EntityDomainWrapper<E, D> {
 	@SuppressWarnings("unchecked")
 	private <T> T map(T o, Deque<Mapper<T>> mapperDelegates) {
 		T target = o instanceof PureObject ? (T) ((PureObject) o).clone() : o;
-		Deque<Mapper<T>> mapperDelegateCopy = new ArrayDeque<>(mapperDelegates);
-		Mapper<T> delegate = mapperDelegateCopy.poll();
-
+		Mapper<T> delegate = mapperDelegates.poll();
 		if (delegate == null) {
 			return target;
 		}
-
-		return this.map(delegate.map(target), mapperDelegateCopy);
+		return this.map(delegate.map(target), mapperDelegates);
 	}
 
-	@Override
-	public int getPriority() {
-		return this.priority;
+	private static <T> Deque<Mapper<T>> defaultDeque() {
+		return new ArrayDeque<>();
 	}
+
 
 }

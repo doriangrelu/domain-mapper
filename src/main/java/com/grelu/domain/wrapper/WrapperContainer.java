@@ -8,18 +8,15 @@ import java.util.List;
  */
 public interface WrapperContainer {
 
-
 	WrapperContainer registerWrapper(EntityDomainWrapper<?, ?> wrapper);
 
 	WrapperContainer registerWrapper(EntityDomainWrapper<?, ?>... wrapper);
-
 
 	default <E, D> E toEntity(Class<?> clazz, D domain) {
 		return this.toEntity(clazz, domain, true, EntityDomainWrapper.DEFAULT_OPTION);
 	}
 
 	<E, D> E toEntity(Class<?> clazz, D domain, boolean triggerMap, String option);
-
 
 	default <E, D> List<E> toEntities(Class<?> clazz, List<D> domains) {
 		return this.toEntities(clazz, domains, true, EntityDomainWrapper.DEFAULT_OPTION);
@@ -32,12 +29,15 @@ public interface WrapperContainer {
 				.toList();
 	}
 
-
 	default <E, D> D toDomain(Class<?> clazz, E entity) {
 		return this.toDomain(clazz, entity, true, EntityDomainWrapper.DEFAULT_OPTION);
 	}
 
 	<E, D> D toDomain(Class<?> clazz, E entity, boolean triggerMap, String option);
+
+	default <E, D> List<D> toDomains(Class<?> clazz, List<E> entities) {
+		return this.toDomains(clazz, entities, EntityDomainWrapper.DEFAULT_OPTION);
+	}
 
 	default <E, D> List<D> toDomains(Class<?> clazz, List<E> entities, String option) {
 		return this.toDomains(clazz, entities, true, EntityDomainWrapper.DEFAULT_OPTION);
@@ -49,6 +49,10 @@ public interface WrapperContainer {
 	}
 
 	<E> E mapEntity(Class<?> clazz, E entity, String option);
+
+	default <E> E mapEntity(Class<?> clazz, E entity) {
+		return this.mapEntity(clazz, entity, EntityDomainWrapper.DEFAULT_OPTION);
+	}
 
 	default <E> List<E> mapEntities(Class<?> clazz, List<E> entities, String option) {
 		return entities.parallelStream()
@@ -63,4 +67,9 @@ public interface WrapperContainer {
 				.map(domain -> this.mapDomain(clazz, domain, option))
 				.toList();
 	}
+
+	public <E, D> EntityDomainWrapper<? super E, D> resolveDomainWrapper(Class<?> target, String option);
+
+	public <E, D> EntityDomainWrapper<E, ? super D> resolveEntityWrapper(Class<?> target, String option);
+
 }
