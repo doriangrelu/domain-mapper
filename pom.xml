@@ -13,7 +13,7 @@
 
     <groupId>com.grelu</groupId>
     <artifactId>domain-mapper</artifactId>
-    <version>1.0-RELEASE</version>
+    <version>1.1-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>16</maven.compiler.source>
